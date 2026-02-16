@@ -1,21 +1,37 @@
-CREATE TABLE drivers AS
-SELECT d.id AS driver_id,
-    d.name,
-    d.nationalityCountryId AS nationality,
-    d.totalRaceWins AS race_wins,
-    d.totalPoints AS points,
-    d.totalChampionshipWins AS championship_wins,
-    d.bestRaceResult AS best_result,
-    d.totalRaceStarts AS race_starts,
-    d.totalPodiums AS podiums,
-    d.totalRaceLaps AS race_laps,
-    d.totalFastestLaps AS fastest_laps,
-    d.totalDriverOfTheDay AS driver_of_the_day,
-    d.totalGrandSlams AS grand_slams
-FROM (
-    SELECT unnest(drivers) AS d
-    FROM read_json_auto('/Users/new/Downloads/f1db-json-single/f1db.json', maximum_object_size=500000000));
+DROP TABLE IF EXISTS drivers;
+CREATE TABLE drivers (
+    driver_id           VARCHAR,
+    name                VARCHAR,
+    nationality         VARCHAR,
+    race_wins           INTEGER,
+    points              DOUBLE,
+    championship_wins   INTEGER,
+    best_result         INTEGER,
+    race_starts         INTEGER,
+    podiums             INTEGER,
+    race_laps           INTEGER,
+    fastest_laps        INTEGER,
+    driver_of_the_day   INTEGER,
+    grand_slams         INTEGER);
 
+INSERT INTO drivers
+SELECT d.id,
+    d.name,
+    d.nationalityCountryId,
+    d.totalRaceWins,
+    d.totalPoints,
+    d.totalChampionshipWins,
+    d.bestRaceResult,
+    d.totalRaceStarts,
+    d.totalPodiums,
+    d.totalRaceLaps,
+    d.totalFastestLaps,
+    d.totalDriverOfTheDay,
+    d.totalGrandSlams
+FROM read_json_auto('/Users/new/Downloads/f1db-json-single/f1db.json', maximum_object_size=600000000),
+     UNNEST(drivers) AS t(d);
+
+-- Drivers ranked by the amount of podiums by nationality
 SELECT name,
     nationality,
     podiums,
@@ -24,12 +40,14 @@ FROM drivers
 WHERE podiums > 0
 ORDER BY nationality, national_rank;
 
+-- The fastest driver
 SELECT name,
     fastest_laps/race_laps AS fastest_laps_coef
 FROM drivers
 WHERE race_laps > 0
 ORDER BY fastest_laps_coef DESC;
 
+-- The percentage of wins each driver achieved for their country
 SELECT name,
     nationality,
     race_wins,
